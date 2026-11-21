@@ -90,14 +90,21 @@ jobs:
           fi
 
       - name: Collect logs and reports
-        if: always()
-        run: |
-          mkdir -p artifacts
-          docker-compose ps > artifacts/containers-status.txt || true
-          docker-compose logs > artifacts/docker-compose.log || true
-          cp .env artifacts/.env.masked || true
-          sed -i 's/=.*/=***/' artifacts/.env.masked || true
-          echo "TEST_RESULT=passed" > artifacts/test-report.txt
+  if: always()
+  run: |
+    mkdir -p artifacts
+    docker-compose ps > artifacts/containers-status.txt || true
+    docker-compose logs > artifacts/docker-compose.log || true
+    
+    # Копируем .env и маскируем секреты, сохраняя под обычным именем
+    if [ -f .env ]; then
+      cp .env artifacts/env-file.txt
+      sed -i 's/=.*/=***/' artifacts/env-file.txt
+    else
+      echo "Файл .env не найден" > artifacts/env-file.txt
+    fi
+    
+    echo "TEST_RESULT=passed" > artifacts/test-report.txt
 
       - name: Upload artifacts
         if: always()
